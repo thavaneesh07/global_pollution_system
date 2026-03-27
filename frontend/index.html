@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>🌍 AI Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { background:#0f172a; color:white; font-family:Arial; }
+.grid { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; padding:20px; }
+.card { background:#1e293b; padding:15px; border-radius:10px; }
+.center { text-align:center; }
+canvas { height:200px !important; }
+</style>
+</head>
+
+<body>
+
+<h1>🌍 AI Pollution Dashboard</h1>
+
+<div class="center">
+    <button onclick="loadAll()">🚀 Load Dashboard</button>
+    <br><br>
+
+    <input type="file" id="file">
+    <button onclick="upload()">📤 Upload Dataset</button>
+
+    <p id="detect"></p>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>🌫️ Air Analysis</h3>
+<canvas id="airChart"></canvas>
+</div>
+
+<div class="card">
+<h3>🔮 Air Forecast</h3>
+<canvas id="airForecastChart"></canvas>
+</div>
+
+<div class="card">
+<h3>🌊 Water Analysis</h3>
+<canvas id="waterChart"></canvas>
+</div>
+
+<div class="card">
+<h3>🔮 Water Forecast</h3>
+<canvas id="waterForecastChart"></canvas>
+</div>
+
+<div class="card">
+<h3>🤖 AI Chatbot</h3>
+<input id="msg" placeholder="Ask anything...">
+<button onclick="send()">Send</button>
+<p id="reply"></p>
+</div>
+
+</div>
+
+<script>
+let charts = {};
+
+function draw(id,type,labels,values){
+    let ctx=document.getElementById(id).getContext("2d");
+    if(charts[id]) charts[id].destroy();
+
+    charts[id]=new Chart(ctx,{
+        type:type,
+        data:{labels:labels,datasets:[{data:values}]}
+    });
+}
+
+async function loadAll(){
+
+let air=await fetch("http://127.0.0.1:5000/air-analysis").then(r=>r.json());
+draw("airChart","bar",air.labels,air.values);
+
+let airF=await fetch("http://127.0.0.1:5000/air-forecast").then(r=>r.json());
+draw("airForecastChart","line",airF.labels,airF.values);
+
+let water=await fetch("http://127.0.0.1:5000/water-analysis").then(r=>r.json());
+draw("waterChart","bar",water.labels,water.values);
+
+let waterF=await fetch("http://127.0.0.1:5000/water-forecast").then(r=>r.json());
+draw("waterForecastChart","line",waterF.labels,waterF.values);
+
+}
+
+async function upload(){
+let file=document.getElementById("file").files[0];
+let formData=new FormData();
+formData.append("file",file);
+
+let res=await fetch("http://127.0.0.1:5000/upload",{method:"POST",body:formData});
+let data=await res.json();
+
+document.getElementById("detect").innerText="Detected: "+data.type;
+
+// 🔥 LIVE UPDATE
+loadAll();
+}
+
+async function send(){
+let msg=document.getElementById("msg").value;
+
+let res=await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:msg})
+});
+
+let data=await res.json();
+document.getElementById("reply").innerText=data.reply;
+}
+</script>
+
+</body>
+</html>

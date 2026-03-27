@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h2>🌫️ Air Dashboard</h2>
+
+<button onclick="loadAnalysis()">Air Analysis</button>
+<button onclick="loadForecast()">Forecast</button>
+
+<br><br>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+<pre id="text"></pre>
+
+<script>
+let chart;
+
+function drawChart(type, labels, values, title) {
+    let ctx = document.getElementById("chart").getContext("2d");
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: title,
+                data: values
+            }]
+        }
+    });
+}
+
+async function loadAnalysis() {
+    let res = await fetch("http://127.0.0.1:5000/air-analysis");
+    let data = await res.json();
+
+    drawChart("bar", data.labels, data.values, "Top Countries");
+
+    document.getElementById("text").innerText =
+        JSON.stringify(data, null, 2);
+}
+
+async function loadForecast() {
+    let res = await fetch("http://127.0.0.1:5000/air-forecast");
+    let data = await res.json();
+
+    drawChart("line", data.labels, data.values, "AQI Forecast");
+
+    document.getElementById("text").innerText =
+        JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
